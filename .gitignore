@@ -1,6 +1,7 @@
 # Config (contains sensitive info)
 config.yaml
 config.json
+backend/config.conf
 
 # Go
 *.exe
@@ -126,6 +127,7 @@ pocketbase-src/
 
 # Frontend embedded build output
 api/frontend/dist/
+backend/static/
 
 urldb
 
