@@ -2,9 +2,10 @@ package main
 
 import (
 	"embed"
-	"flag"
 	"net/http"
+	"os"
 	"runtime"
+	"strconv"
 	"strings"
 	"verification/controllers/common"
 	"verification/models"
@@ -22,10 +23,29 @@ import (
 //go:embed static
 var staticFiles embed.FS
 
-var httpPort int
+// getPortFromArgs 从命令行参数或环境变量获取端口
+func getPortFromArgs() int {
+	// 优先从环境变量获取
+	if portStr := os.Getenv("HTTP_PORT"); portStr != "" {
+		if port, err := strconv.Atoi(portStr); err == nil && port > 0 {
+			return port
+		}
+	}
 
-func init() {
-	flag.IntVar(&httpPort, "port", 0, "http port (default from config)")
+	// 从命令行参数获取 -port=xxx
+	for _, arg := range os.Args[1:] {
+		if strings.HasPrefix(arg, "-port=") {
+			portStr := strings.TrimPrefix(arg, "-port=")
+			if port, err := strconv.Atoi(portStr); err == nil && port > 0 {
+				return port
+			}
+		}
+		if arg == "-port" {
+			// TODO: handle -port xxx format
+		}
+	}
+
+	return 0
 }
 
 // staticFileHandler serves static files from embedded FS with SPA fallback
@@ -58,6 +78,11 @@ func staticFileHandler(ctx *context.Context) {
 }
 
 func init() {
+	// 在 init 最开始解析端口参数
+	if port := getPortFromArgs(); port > 0 {
+		beego.BConfig.Listen.HTTPPort = port
+	}
+
 	status, Conf := common.ReadIni()
 	if status == false {
 		logs.Error("配置文件读取失败")
@@ -95,13 +120,6 @@ func init() {
 }
 
 func main() {
-	flag.Parse()
-
-	// 如果命令行指定了端口，覆盖配置
-	if httpPort > 0 {
-		beego.BConfig.Listen.HTTPPort = httpPort
-	}
-
 	var messages = map[string]string{
 		"Required": "不能为空",
 		"MinSize":  "最短长度为 %d",
