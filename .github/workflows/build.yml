@@ -9,6 +9,9 @@ on:
         default: 'v0.0.1-dev'
         type: string
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -67,14 +70,14 @@ jobs:
         run: |
           go build -ldflags="-s -w" -o ../soft-center-linux-amd64 .
 
-      - name: Build for Windows amd64
-        working-directory: backend
-        env:
-          GOOS: windows
-          GOARCH: amd64
-          CGO_ENABLED: 0
+      - name: Install UPX
+        uses: crazy-max/ghaction-upx@v3
+        with:
+          install-only: true
+
+      - name: Compress binary with UPX
         run: |
-          go build -ldflags="-s -w" -o ../soft-center-windows-amd64.exe .
+          upx --best --lzma soft-center-linux-amd64 -o soft-center-linux-amd64-upx
 
       - name: Create config example
         run: |
@@ -101,7 +104,7 @@ jobs:
           name: Release ${{ github.event.inputs.version }}
           files: |
             soft-center-linux-amd64
-            soft-center-windows-amd64.exe
+            soft-center-linux-amd64-upx
           draft: false
           prerelease: false
         env:
