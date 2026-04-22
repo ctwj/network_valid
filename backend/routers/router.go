@@ -9,13 +9,11 @@ package routers
 
 import (
 	beego "github.com/beego/beego/v2/server/web"
-	"verification/controllers"
 	"verification/controllers/admin"
 	"verification/controllers/api"
 )
 
 func init() {
-	beego.Include(&controllers.MainController{})
 	nsAdmin := beego.NewNamespace("/admin",
 		beego.NSNamespace("/user",
 			beego.NSInclude(&admin.UserController{}),
