@@ -2,6 +2,7 @@ package main
 
 import (
 	"embed"
+	"flag"
 	"net/http"
 	"runtime"
 	"strings"
@@ -20,6 +21,12 @@ import (
 
 //go:embed static
 var staticFiles embed.FS
+
+var httpPort int
+
+func init() {
+	flag.IntVar(&httpPort, "port", 0, "http port (default from config)")
+}
 
 // staticFileHandler serves static files from embedded FS with SPA fallback
 func staticFileHandler(ctx *context.Context) {
@@ -88,6 +95,13 @@ func init() {
 }
 
 func main() {
+	flag.Parse()
+
+	// 如果命令行指定了端口，覆盖配置
+	if httpPort > 0 {
+		beego.BConfig.Listen.HTTPPort = httpPort
+	}
+
 	var messages = map[string]string{
 		"Required": "不能为空",
 		"MinSize":  "最短长度为 %d",
