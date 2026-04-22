@@ -1,0 +1,94 @@
+name: Build and Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag (e.g., v1.0.0)'
+        required: false
+        default: 'v0.0.1-dev'
+        type: string
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: pnpm install
+
+      - name: Build frontend
+        working-directory: frontend
+        run: pnpm build
+
+      - name: Copy frontend build to backend static
+        run: |
+          rm -rf backend/static
+          cp -r frontend/dist backend/static
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+
+      - name: Build for Linux amd64
+        working-directory: backend
+        env:
+          GOOS: linux
+          GOARCH: amd64
+          CGO_ENABLED: 0
+        run: |
+          go build -ldflags="-s -w" -o ../soft-center-linux-amd64 .
+
+      - name: Build for Windows amd64
+        working-directory: backend
+        env:
+          GOOS: windows
+          GOARCH: amd64
+          CGO_ENABLED: 0
+        run: |
+          go build -ldflags="-s -w" -o ../soft-center-windows-amd64.exe .
+
+      - name: Create config example
+        run: |
+          if [ ! -f backend/config.conf.example ]; then
+            cat > backend/config.conf.example << 'EOF'
+          [app]
+          cache    = file
+          key      = your-secret-key
+          [sql]
+          type     = sqlite
+          ip       = 127.0.0.1
+          port     = 3306
+          user     = your_user
+          pwd      = your_password
+          db       = your_database
+          rebuild  = false
+          EOF
+          fi
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.event.inputs.version }}
+          name: Release ${{ github.event.inputs.version }}
+          files: |
+            soft-center-linux-amd64
+            soft-center-windows-amd64.exe
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
