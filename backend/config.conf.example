@@ -1,11 +1,12 @@
 [app]
-cache    = file
-key      = 1
+cache     = file
+key       = your-secret-key
+httpport  = 9960
 [sql]
-type     = sqlite
-ip       = 127.0.0.1
-port     = 3306
-user     = auth_test
-pwd      = ZtiMPESdNi8tYiSN
-db       = auth_test
-rebuild  = false
+type      = sqlite
+ip        = 127.0.0.1
+port      = 3306
+user      = your_user
+pwd       = your_password
+db        = your_database
+rebuild   = false

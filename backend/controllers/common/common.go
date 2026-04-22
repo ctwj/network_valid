@@ -48,6 +48,7 @@ type LoginResult struct {
 
 type Config struct {
 	Cache      string `json:"Cache"`
+	HttpPort   int    `json:"HttpPort"`
 	RedisIp    string `json:"RedisIp"`
 	RedisPort  string `json:"RedisPort"`
 	RedisPwd   string `json:"RedisPwd"`
@@ -155,6 +156,10 @@ func ReadIni() (status bool, conf Config) {
 	}
 	Cache, _ := cfg.String("app::cache")
 	Key, _ := cfg.String("app::key")
+	HttpPort, _ := cfg.Int("app::httpport")
+	if HttpPort == 0 {
+		HttpPort = 9960 // 默认端口
+	}
 	RedisIp, _ := cfg.String("redis::ip")
 	if RedisIp == "" {
 		RedisIp = "127.0.0.1"
@@ -178,6 +183,7 @@ func ReadIni() (status bool, conf Config) {
 	}
 	Conf = Config{
 		Cache:      Cache,
+		HttpPort:   HttpPort,
 		RedisIp:    RedisIp,
 		RedisPort:  RedisPort,
 		RedisPwd:   RedisPwd,
