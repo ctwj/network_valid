@@ -22,13 +22,18 @@ export function createVitePlugins(viteEnv: ViteEnv, isBuild: boolean, prodMock: 
     progress(),
     // 自动导入图标
     PurgeIcons(),
-    // Eslint 插件
-    EslintPlugin({
-      cache: false,
-      include: ['src/**/*.vue', 'src/**/*.ts', 'src/**/*.tsx'],
-      exclude: ['node_modules', 'dist'],
-    }),
   ];
+
+  // Eslint 插件 - 仅在开发模式启用
+  if (!isBuild) {
+    vitePlugins.push(
+      EslintPlugin({
+        cache: false,
+        include: ['src/**/*.vue', 'src/**/*.ts', 'src/**/*.tsx'],
+        exclude: ['node_modules', 'dist'],
+      })
+    );
+  }
 
   // PWA 插件
   vitePlugins.push(
