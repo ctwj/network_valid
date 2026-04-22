@@ -5,7 +5,7 @@ import progress from 'vite-plugin-progress';
 import EslintPlugin from 'vite-plugin-eslint';
 import { VitePWA } from 'vite-plugin-pwa';
 import { visualizer } from 'rollup-plugin-visualizer';
-import { createMockServer } from 'vite-plugin-mock';
+import { viteMockServe } from 'vite-plugin-mock';
 import PurgeIcons from 'vite-plugin-purge-icons';
 import { createHtmlPlugin } from 'vite-plugin-html';
 import Compression from 'vite-plugin-compression';
@@ -70,10 +70,10 @@ export function createVitePlugins(viteEnv: ViteEnv, isBuild: boolean, prodMock: 
 
   // Mock 插件
   vitePlugins.push(
-    createMockServer({
+    viteMockServe({
       ignore: /^_/,
-      mockFiles: ['mock/**/*.ts'],
-      enableProd: prodMock,
+      mockPath: 'mock',
+      enable: !isBuild || prodMock,
       watchFiles: true,
     })
   );
