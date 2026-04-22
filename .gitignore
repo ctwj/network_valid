@@ -121,7 +121,6 @@ uploads/*
 !uploads/.gitkeep
 
 # Build artifacts
-build/
 dist/
 pocketbase-src/
 
@@ -144,3 +143,4 @@ main
 output.zip
 CLAUDE.md
 demo/
+.playwright-mcp/
