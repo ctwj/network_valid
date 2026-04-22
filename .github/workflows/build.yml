@@ -77,7 +77,7 @@ jobs:
 
       - name: Compress binary with UPX
         run: |
-          upx --best --lzma soft-center-linux-amd64 -o soft-center-linux-amd64-upx
+          upx --best --lzma soft-center-linux-amd64
 
       - name: Create config example
         run: |
@@ -104,7 +104,6 @@ jobs:
           name: Release ${{ github.event.inputs.version }}
           files: |
             soft-center-linux-amd64
-            soft-center-linux-amd64-upx
           draft: false
           prerelease: false
         env:
