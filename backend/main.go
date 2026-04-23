@@ -2,7 +2,9 @@ package main
 
 import (
 	"embed"
-	"net/http"
+	"io/fs"
+	"mime"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"verification/controllers/common"
@@ -27,15 +29,24 @@ func staticFileHandler(ctx *context.Context) {
 
 	// API routes should not be handled here (handled by Beego routers)
 	if strings.HasPrefix(path, "/admin/") || strings.HasPrefix(path, "/api/") {
-		ctx.Output.SetStatus(404)
+		return // Continue to Beego routers
+	}
+
+	// Create a sub-filesystem from the "static" directory
+	subFS, err := fs.Sub(staticFiles, "static")
+	if err != nil {
+		ctx.Output.SetStatus(500)
 		return
 	}
 
-	// Try to open the file from embedded FS
-	file, err := staticFiles.Open("static" + path)
+	// Remove leading slash for file path
+	filePath := strings.TrimPrefix(path, "/")
+
+	// Try to read the file from the sub-filesystem
+	fileContent, err := fs.ReadFile(subFS, filePath)
 	if err != nil {
 		// File not found, serve index.html for SPA routing
-		indexFile, indexErr := staticFiles.ReadFile("static/index.html")
+		indexFile, indexErr := fs.ReadFile(subFS, "index.html")
 		if indexErr != nil {
 			ctx.Output.SetStatus(404)
 			return
@@ -44,10 +55,23 @@ func staticFileHandler(ctx *context.Context) {
 		ctx.Output.Body(indexFile)
 		return
 	}
-	file.Close()
 
-	// Serve the file using http.FileServer
-	http.FileServer(http.FS(staticFiles)).ServeHTTP(ctx.ResponseWriter, ctx.Request)
+	// Determine MIME type based on file extension
+	ext := filepath.Ext(filePath)
+	mimeType := mime.TypeByExtension(ext)
+	if mimeType == "" {
+		// Default MIME type for unknown extensions
+		mimeType = "application/octet-stream"
+	}
+	// Ensure charset for text types
+	if strings.HasPrefix(mimeType, "text/") || strings.Contains(mimeType, "javascript") || strings.Contains(mimeType, "json") {
+		if !strings.Contains(mimeType, "charset") {
+			mimeType += "; charset=utf-8"
+		}
+	}
+
+	ctx.Output.Header("Content-Type", mimeType)
+	ctx.Output.Body(fileContent)
 }
 
 func init() {
@@ -111,8 +135,8 @@ func main() {
 	beego.BConfig.WebConfig.Session.SessionProvider = "file"
 	beego.BConfig.WebConfig.Session.SessionProviderConfig = "./tmp"
 
-	// Register static file handler with SPA fallback
-	beego.Get("/*", staticFileHandler)
+	// Register static file handler with SPA fallback using Filter
+	beego.InsertFilter("*", beego.BeforeRouter, staticFileHandler)
 
 	beego.Run()
 }
