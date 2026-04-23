@@ -25,6 +25,7 @@ func (u *UserController) Login() {
 	err, user := user.Login(username, password)
 	if err != "" {
 		u.Error(400, err)
+		return
 	}
 	token := common.GetToken()
 	user.Pwd = ""
