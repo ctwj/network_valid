@@ -144,3 +144,4 @@ output.zip
 CLAUDE.md
 demo/
 .playwright-mcp/
+cache/

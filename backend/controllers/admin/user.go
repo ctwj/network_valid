@@ -21,8 +21,8 @@ func (u *UserController) Login() {
 	logs.Info(u.Ctx.Request)
 	username := u.GetString("user")
 	password := u.GetString("pwd")
-	var user *models.Manager
-	err, user := user.Login(username, password)
+	m := models.Manager{}
+	err, user := m.Login(username, password)
 	if err != "" {
 		u.Error(400, err)
 		return
@@ -65,8 +65,9 @@ func (u *UserController) Info() {
 	managerId := common.GetManagerId(u.GetSession("token"))
 	if managerId == 0 {
 		u.Error(400, "请先登录")
+		return
 	}
-	var m *models.Manager
+	m := models.Manager{}
 	user, err := m.GetInfoById(managerId)
 	if err != nil {
 		u.Error(400, "获取失败")
