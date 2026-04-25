@@ -22,9 +22,13 @@ func (u *UserController) Login() {
 	username := u.GetString("user")
 	password := u.GetString("pwd")
 	m := models.Manager{}
-	err, user := m.Login(username, password)
-	if err != "" {
-		u.Error(400, err)
+	errMsg, user := m.Login(username, password)
+	if errMsg != "" {
+		u.Error(400, errMsg)
+		return
+	}
+	if user == nil {
+		u.Error(400, "登录失败")
 		return
 	}
 	token := common.GetToken()
@@ -35,7 +39,7 @@ func (u *UserController) Login() {
 		logs.Error("缓存初始化错误")
 		return
 	}
-	_ = u.SetSession("token", strconv.Itoa(user.ID))
+	// 使用 cache 存储 token 和用户信息，不依赖 session
 	_ = cacheClient.Put(token, strconv.Itoa(user.ID), 2*60*60*time.Second)
 	data, _ := json.Marshal(user)
 	_ = cacheClient.Put("manager-info-"+strconv.Itoa(user.ID), string(data), 365*60*60*time.Second)
@@ -62,7 +66,7 @@ func (u *UserController) Info() {
 	var newVersion string
 	var notice string
 
-	managerId := common.GetManagerId(u.GetSession("token"))
+	managerId := u.ManagerId
 	if managerId == 0 {
 		u.Error(400, "请先登录")
 		return
@@ -71,6 +75,7 @@ func (u *UserController) Info() {
 	user, err := m.GetInfoById(managerId)
 	if err != nil {
 		u.Error(400, "获取失败")
+		return
 	}
 	user.Pwd = ""
 
@@ -112,10 +117,6 @@ func (u *UserController) Info() {
 // Logout @Title 退出
 // @router /logout [post]
 func (u *UserController) Logout() {
-	managerId := common.GetManagerId(u.GetSession("token"))
-	if managerId > 0 {
-		_ = u.SetSession("token", "0")
-	}
 	u.Success(0, nil, "退出成功")
 }
 
@@ -129,7 +130,7 @@ type ManagerStatic struct {
 // @router /getInfo [post]
 func (u *UserController) GetInfo() {
 	var c ManagerStatic
-	managerId := common.GetManagerId(u.GetSession("token"))
+	managerId := u.ManagerId
 	if u.ManagerInfo.Pid == 0 {
 		p := models.Project{ManagerId: managerId}
 		k := models.Keys{ManagerId: managerId}
@@ -238,8 +239,9 @@ func (u *UserController) Update() {
 	runmode, _ := beego.AppConfig.String("runmode")
 	if runmode == "dev" {
 		u.Error(400, "调试模式下不允许修改超管账号")
+		return
 	}
-	managerId := common.GetManagerId(u.GetSession("token"))
+	managerId := u.ManagerId
 	username := u.GetString("user", "")
 	pwd := u.GetString("pwd", "")
 	email := u.GetString("email", "")

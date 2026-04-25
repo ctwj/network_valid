@@ -72,11 +72,18 @@ func (b *BaseController) Prepare() {
 		status, ac := common.GetCacheAC()
 		if status == false {
 			b.Error(400, "缓存初始化失败")
+			return
 		}
-		id := b.GetSession("token")
-		Id := common.GetInterfaceToInt(id)
-		if id == "" || Id <= 0 {
+		if len(token) == 0 || token[0] == "" {
 			b.Error(401, "请重新登录")
+			return
+		}
+		// 通过 cache 获取用户 ID
+		idStr := common.Strval(ac.Get(token[0]))
+		Id := common.GetInterfaceToInt(idStr)
+		if idStr == "" || Id <= 0 {
+			b.Error(401, "请重新登录")
+			return
 		}
 		_ = ac.Put(token[0], strconv.Itoa(Id), 2*60*60*time.Second)
 		m := models.Manager{ID: Id}
@@ -88,6 +95,7 @@ func (b *BaseController) Prepare() {
 		var user = models.Manager{}
 		if userCache == "" {
 			b.Error(401, "请重新登录")
+			return
 		}
 		_ = json.Unmarshal([]byte(common.Strval(userCache)), &user)
 		b.ManagerInfo = user

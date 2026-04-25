@@ -132,8 +132,6 @@ func main() {
 		beego.BConfig.WebConfig.DirectoryIndex = true
 		beego.BConfig.WebConfig.StaticDir["/swagger"] = "swagger"
 	}
-	beego.BConfig.WebConfig.Session.SessionProvider = "file"
-	beego.BConfig.WebConfig.Session.SessionProviderConfig = "./tmp"
 
 	// Register static file handler with SPA fallback using Filter
 	beego.InsertFilter("*", beego.BeforeRouter, staticFileHandler)

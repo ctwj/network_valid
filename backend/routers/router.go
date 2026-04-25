@@ -14,6 +14,10 @@ import (
 )
 
 func init() {
+	// Session 配置
+	beego.BConfig.WebConfig.Session.SessionOn = true
+	beego.BConfig.WebConfig.Session.SessionProvider = "memory"
+
 	nsAdmin := beego.NewNamespace("/admin",
 		beego.NSNamespace("/user",
 			beego.NSInclude(&admin.UserController{}),

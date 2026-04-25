@@ -68,7 +68,7 @@ func (p *ProjectController) CreateProject() {
 	notice := p.GetString("notice", "")
 	api := p.GetString("api", "")
 	sign, _ := p.GetInt("sign", 0)
-	managerId := common.GetManagerId(p.GetSession("token"))
+	managerId := p.ManagerId
 	var project *models.Project
 	id := project.Add(name, projectType, statusType, encrypt, notice, api, managerId, sign)
 	if id == 0 {
@@ -142,7 +142,7 @@ func (p *ProjectController) CreateVersion() {
 	notice := p.GetString("notice", "")
 	wgt := p.GetString("wgt_url", "")
 	var projectVersion *models.ProjectVersion
-	managerId := common.GetManagerId(p.GetSession("token"))
+	managerId := p.ManagerId
 	id, msg := projectVersion.Add(projectId, version, mustUpdate, active, notice, wgt, managerId)
 	if id > 0 {
 		p.Success(0, id, msg)
@@ -216,7 +216,7 @@ func (p *ProjectController) CreateCard() {
 	if Tag == "免费用户" {
 		p.Error(400, "标签：【免费用户】不可用")
 	}
-	managerId := common.GetManagerId(p.GetSession("token"))
+	managerId := p.ManagerId
 	valid := validation.Validation{}
 	y := admin.CreateCards{
 		Title:      Title,
@@ -371,7 +371,7 @@ func (p *ProjectController) CreateLoginRule() {
 	NumberWeakenTime, _ := p.GetInt("number_weaken_time", 0)
 	PcMore, _ := p.GetInt("pc_more", 0)
 	PcCodeMore, _ := p.GetInt("pc_code_more", 0)
-	managerId := common.GetManagerId(p.GetSession("token"))
+	managerId := p.ManagerId
 	m := models.ProjectLogin{
 		Title:              Title,
 		Mode:               Mode,
@@ -535,7 +535,7 @@ func (p *ProjectController) QueryOrderRmb() {
 			p.Error(400, err.Message)
 		}
 	}
-	managerId := common.GetManagerId(p.GetSession("token"))
+	managerId := p.ManagerId
 	var c *models.Keys
 	type res struct {
 		Status bool    `json:"status"`
@@ -597,7 +597,7 @@ func (p *ProjectController) CreateKeys() {
 			p.Error(400, err.Message)
 		}
 	}
-	managerId := common.GetManagerId(p.GetSession("token"))
+	managerId := p.ManagerId
 	var c *models.Keys
 	status, keys, msg := c.Create(cardsId, count, length, createType, managerId, projectId, tag, agentPrice)
 	if status == true {
@@ -876,7 +876,7 @@ func (p *ProjectController) MemberLogout() {
 // @router /getManagerList [post]
 func (p *ProjectController) GetManagerList() {
 	p.IsDeveloper()
-	managerId := common.GetManagerId(p.GetSession("token"))
+	managerId := p.ManagerId
 	var m *models.Manager
 	_, data := m.GetManagerList(managerId, p.ManagerIdArr)
 	p.Success(0, data, "获取成功")
@@ -900,7 +900,7 @@ func (p *ProjectController) ManagerAdd() {
 	if email == "" {
 		p.Error(400, "邮箱不能为空")
 	}
-	managerId := common.GetManagerId(p.GetSession("token"))
+	managerId := p.ManagerId
 	i := models.Manager{ID: managerId}
 	i, _ = i.GetInfoById(managerId)
 	level := i.Level + 1
@@ -1072,7 +1072,7 @@ func (p *ProjectController) GetRoleUser() {
 	p.IsDeveloper()
 	limit, _ := p.GetInt64("limit", 10)
 	page, _ := p.GetInt64("page", 1)
-	managerId := common.GetManagerId(p.GetSession("token"))
+	managerId := p.ManagerId
 	var r *models.Role
 	status, list := r.GetRoleList(limit, page, managerId)
 	if status == true {
@@ -1095,7 +1095,7 @@ func (p *ProjectController) CreateRoleUser() {
 			p.Error(400, "提供的权限参数格式错误")
 		}
 	}
-	managerId := common.GetManagerId(p.GetSession("token"))
+	managerId := p.ManagerId
 	r := models.Role{
 		ManagerId:   managerId,
 		Title:       title,
@@ -1154,7 +1154,7 @@ func (p *ProjectController) GetUserRole() {
 func (p *ProjectController) GetRole() {
 	p.IsDeveloper()
 	r := models.Role{}
-	managerId := common.GetManagerId(p.GetSession("token"))
+	managerId := p.ManagerId
 	list := r.GetRoleAll(managerId)
 	p.Success(0, list, "获取成功")
 }
