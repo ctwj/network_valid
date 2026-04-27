@@ -35,5 +35,25 @@ func (p *IndexController) Index() {
 		p.Client()
 	case "user.logout":
 		p.Logout()
+	// 配额相关接口
+	case "quota.check":
+		quota := &QuotaController{IndexController: *p}
+		quota.Check()
+	case "quota.deduct":
+		quota := &QuotaController{IndexController: *p}
+		quota.Deduct()
+	case "quota.deductBatch":
+		quota := &QuotaController{IndexController: *p}
+		quota.DeductBatch()
+	// 套餐相关接口
+	case "plan.list":
+		plan := &PlanController{IndexController: *p}
+		plan.List()
+	case "plan.current":
+		plan := &PlanController{IndexController: *p}
+		plan.Current()
+	case "plan.queued":
+		plan := &PlanController{IndexController: *p}
+		plan.Queued()
 	}
 }

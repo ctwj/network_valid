@@ -20,7 +20,7 @@ const routes: Array<RouteRecordRaw> = [
     redirect: '/keys/typeList',
     component: Layout,
     meta: {
-      title: '激活码管理',
+      title: '兑换码管理',
       icon: renderIcon(CardOutline),
       sort: 2,
     },
@@ -29,7 +29,7 @@ const routes: Array<RouteRecordRaw> = [
         path: 'typeList',
         name: 'typeList',
         meta: {
-          title: '激活码类型',
+          title: '套餐类型',
           permissions: ['developer'],
         },
         component: () => import('@/views/keys/typeList.vue'),
@@ -38,7 +38,7 @@ const routes: Array<RouteRecordRaw> = [
         path: 'keysCreate',
         name: 'keysCreate',
         meta: {
-          title: '创建激活码',
+          title: '创建兑换码',
         },
         component: () => import('@/views/keys/keysCreate.vue'),
       },
@@ -46,7 +46,7 @@ const routes: Array<RouteRecordRaw> = [
         path: 'keysList',
         name: 'keysList',
         meta: {
-          title: '激活码列表',
+          title: '兑换码列表',
         },
         component: () => import('@/views/keys/keysList.vue'),
       }

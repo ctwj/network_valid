@@ -31,7 +31,7 @@ export default {
   project: {
     status: ["收费运营", "停止运营", "免费运营"],
     encrypt: ["开放API", "AES"],
-    type: ["单码", "用户"],
+    type: ["用户"],  // 禁用单码模式，只保留用户模式
     hash: ["MD5","SHA1","SHA224","SHA256","SHA384","SHA512"],
     login_mode: ["绑定登录", "普通登录", "点数登录"],
     login_reg_mode: ["带卡注册", "普通注册"],

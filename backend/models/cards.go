@@ -11,15 +11,19 @@ type Cards struct {
 	ID         int       `orm:"column(id)" json:"id"`
 	ProjectId  int       `orm:"index;default(0)" json:"project_id"`
 	ManagerId  int       `orm:"index;default(0)" json:"manager_id"`
-	Title      string    `orm:"size(28);null;description(激活码名称)" json:"title" valid:"Required,AlphaNumeric" valid:"MaxSize(28)"`
-	Price      float64   `orm:"digits(12);decimals(2);default(0);description(激活码定价)" json:"price" valid:"Max(99999);MaxSize(6)"`
-	KeyPrefix  string    `orm:"index;size(4);null;description(激活码前缀)" json:"key_prefix"`
+	Title      string    `orm:"size(28);null;description(套餐名称)" json:"title" valid:"Required,AlphaNumeric" valid:"MaxSize(28)"`
+	Price      float64   `orm:"digits(12);decimals(2);default(0);description(套餐定价)" json:"price" valid:"Max(99999);MaxSize(6)"`
+	KeyPrefix  string    `orm:"index;size(4);null;description(兑换码前缀)" json:"key_prefix"`
 	LevelId    int       `orm:"index;default(0);description(关联会员套餐)" json:"level_id"`
-	Days       float64   `orm:"digits(12);decimals(2);default(0);description(天数)" json:"days" valid:"Max(99999);MaxSize(5)"`
+	Days       float64   `orm:"digits(12);decimals(2);default(0);description(天数,0表示永久)" json:"days" valid:"Max(99999);MaxSize(5)"`
 	Points     int       `orm:"default(0);description(点数)" json:"points" valid:"Max(9999);MaxSize(4)"`
-	KeyExtAttr string    `orm:"size(200);null;description(激活码扩展属性)" json:"key_ext_attr" valid:"MaxSize(199)"`
+	KeyExtAttr string    `orm:"size(200);null;description(兑换码扩展属性)" json:"key_ext_attr" valid:"MaxSize(199)"`
 	Tag        string    `orm:"size(200);null;description(标签)" json:"tag" valid:"MaxSize(199)"`
 	IsLock     int       `orm:"default(0);description(0正常,1锁定);index" json:"is_lock"`
+	// 新增字段：配额系统
+	QuotaRules  string `orm:"type(text);null;description(配额规则JSON)" json:"quota_rules"`
+	IsFreeTier  int    `orm:"default(0);description(是否为免费套餐,0否1是);index" json:"is_free_tier"`
+	Priority    int    `orm:"default(0);description(套餐优先级,越大越高)" json:"priority"`
 	CreateTime time.Time `orm:"auto_now_add;type(datetime);index" json:"create_time"`
 }
 
@@ -169,15 +173,29 @@ func (c *Cards) Delete(id int) bool {
 	}
 	rows, err := o.Delete(&p)
 	if rows > 0 {
+		// 删除关联的兑换码
 		qs := o.QueryTable("Keys")
 		row, _ := qs.Filter("CardsId", p.ID).Delete()
 		if row > 0 {
 			logs.Info("删除激活码数据：", row)
 		}
+		// 删除代理授权
 		qs = o.QueryTable("ManagerCards")
 		row, _ = qs.Filter("CardsId", p.ID).Delete()
 		if row > 0 {
 			logs.Info("删除授权激活码类型数据：", row)
+		}
+		// 删除用户套餐关联
+		qs = o.QueryTable("member_plans")
+		row, _ = qs.Filter("plan_id", p.ID).Delete()
+		if row > 0 {
+			logs.Info("删除用户套餐关联数据：", row)
+		}
+		// 删除用户配额
+		qs = o.QueryTable("user_quotas")
+		row, _ = qs.Filter("plan_id", p.ID).Delete()
+		if row > 0 {
+			logs.Info("删除用户配额数据：", row)
 		}
 		return true
 	}

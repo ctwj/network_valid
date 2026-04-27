@@ -26,6 +26,13 @@ export function createProject(params) {
   });
 }
 
+export function getPlanSchemes() {
+  return http.request({
+    url: '/project/getPlanSchemes',
+    method: 'post',
+  });
+}
+
 export function updateProject(params) {
   return http.request({
     url: '/project/updateProject',

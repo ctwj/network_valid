@@ -28,7 +28,7 @@
             <n-grid-item>
               <n-form-item label="账号" path="member">
                 <n-input :maxlength="32" v-model:value="formParams.member"
-                         placeholder="请输入需查询的账号或者激活码" clearable/>
+                         placeholder="请输入需查询的账号或者兑换码" clearable/>
               </n-form-item>
             </n-grid-item>
             <n-grid-item>
@@ -198,7 +198,7 @@ const loadDataTable = async (res) => {
 function addTable() {
   show.value = true;
   row.value = null;
-  title.value = "创建新激活码类型"
+  title.value = "创建新套餐类型"
 }
 
 function reloadTable() {

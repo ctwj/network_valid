@@ -88,14 +88,14 @@ function handleEdit(record: Recordable) {
   console.log('点击了编辑', record);
   show.value = true;
   row.value = record
-  title.value = "修改激活码类型"
+  title.value = "修改套餐类型"
   // router.push({ name: 'basic-info', params: { id: record.id } });
 }
 
 async function handleDelete(record: Recordable) {
   dialog.warning({
     title: '温馨提示',
-    content: '删除激活码类型，并且删除所有已经创建好的激活码！（操作不可逆，请谨慎操作）',
+    content: '删除套餐类型，并且删除所有已经创建好的兑换码！（操作不可逆，请谨慎操作）',
     positiveText: '删除',
     negativeText: '取消',
     onPositiveClick: async () => {
@@ -117,7 +117,7 @@ const loadDataTable = async (res) => {
 function addTable() {
   show.value = true;
   row.value = null;
-  title.value = "创建新激活码类型"
+  title.value = "创建新套餐类型"
 }
 
 function reloadTable() {

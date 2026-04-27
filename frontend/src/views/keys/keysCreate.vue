@@ -13,29 +13,29 @@
                     :options="projectList" placeholder="请选择归属项目"
                     :on-update:value="updateProjectId"/>
         </n-form-item>
-        <n-form-item label="激活码类型" path="title">
+        <n-form-item label="套餐类型" path="title">
           <n-select label-field="title" value-field="id" v-model:value="formData.cards_id"
-                    :options="cardList" placeholder="请选择归属激活码类型"
+                    :options="cardList" placeholder="请选择归属套餐类型"
                     :on-update:value="updateCards"/>
         </n-form-item>
-        <n-form-item label="激活码长度" path="length">
+        <n-form-item label="兑换码长度" path="length">
           <n-input-number v-model:value="formData.length" :min="8" :max="32"
                           :step="1" clearable/>
         </n-form-item>
-        <n-form-item label="激活码组合格式" path="is_lock">
+        <n-form-item label="兑换码组合格式" path="is_lock">
           <n-radio-group v-model:value="formData.create_type" name="is_lock">
             <n-radio v-for="(item,index) in project.keys_create_type" :value="index" :key="index">
               {{ item }}
             </n-radio>
           </n-radio-group>
         </n-form-item>
-        <n-form-item label="激活码数量" path="days">
+        <n-form-item label="兑换码数量" path="days">
           <n-input-number v-model:value="formData.count" :min="1" :max="500"
                           :step="1" clearable :on-update:value="updateCount"/>
         </n-form-item>
         <n-form-item label="绑定标签" path="tag">
           <n-input :maxlength="200" v-model:value="formData.tag"
-                   placeholder="输入激活码绑定标签，不填则默认绑定激活码内置标签"/>
+                   placeholder="输入兑换码绑定标签，不填则默认绑定套餐内置标签"/>
         </n-form-item>
       </div>
       <div>
@@ -58,11 +58,11 @@
         </n-button>
         <span style="margin-left: 6px" v-if="userInfo.pid > 0">账号余额：{{ userInfo.money }}</span>
       </n-form-item>
-      <n-form-item v-if="show" label="请复制下面的激活码">
+      <n-form-item v-if="show" label="请复制下面的兑换码">
         <n-input
           v-model:value="keys_str"
           type="textarea"
-          placeholder="生成的激活码"
+          placeholder="生成的兑换码"
         />
         <n-button style="margin-left: 10px" @click="copy_inline(keys_str)">复制</n-button>
       </n-form-item>
@@ -105,7 +105,7 @@ const formData = reactive({
 })
 const keys_str = ref('')
 const keys_list = ref([]);
-const title = "创建激活码"
+const title = "创建兑换码"
 const show = ref(false)
 const rmb = ref(0)
 const queryMsg = ref("")

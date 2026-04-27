@@ -9,25 +9,80 @@ import (
 	"verification/controllers/common"
 )
 
+// PlanSchemeConfig 预设方案套餐配置
+type PlanSchemeConfig struct {
+	Name       string  `json:"name"`        // 套餐名称
+	Days       int     `json:"days"`        // 天数，0=永久
+	Price      float64 `json:"price"`       // 价格
+	Priority   int     `json:"priority"`    // 优先级
+	IsFreeTier bool    `json:"is_free_tier"` // 是否为免费套餐
+	QuotaLimit int64   `json:"quota_limit"` // 每日下载次数限制
+	Savings    string  `json:"savings"`     // 节省提示，如"比月卡省10元"
+}
+
+// PlanScheme 预设方案
+type PlanScheme struct {
+	Name        string             `json:"name"`        // 方案名称
+	Description string             `json:"description"` // 方案描述
+	Plans       []PlanSchemeConfig `json:"plans"`       // 套餐列表
+}
+
+// GetDefaultPlanSchemes 返回默认预设方案（销售引导设计）
+func GetDefaultPlanSchemes() []PlanScheme {
+	return []PlanScheme{
+		{
+			Name:        "入门引导",
+			Description: "适合个人轻度使用，价格亲民",
+			Plans: []PlanSchemeConfig{
+				{Name: "免费套餐", Days: 0, Price: 0, Priority: 0, IsFreeTier: true, QuotaLimit: 5, Savings: ""},
+				{Name: "月卡套餐", Days: 30, Price: 30, Priority: 10, QuotaLimit: 20, Savings: ""},
+				{Name: "季卡套餐", Days: 90, Price: 80, Priority: 20, QuotaLimit: 20, Savings: "比月卡省10元"},
+			},
+		},
+		{
+			Name:        "标准推荐",
+			Description: "适合日常使用，性价比最高",
+			Plans: []PlanSchemeConfig{
+				{Name: "免费套餐", Days: 0, Price: 0, Priority: 0, IsFreeTier: true, QuotaLimit: 5, Savings: ""},
+				{Name: "月卡套餐", Days: 30, Price: 49, Priority: 10, QuotaLimit: 50, Savings: ""},
+				{Name: "季卡套餐", Days: 90, Price: 129, Priority: 20, QuotaLimit: 50, Savings: "比月卡省18元"},
+				{Name: "年卡套餐", Days: 365, Price: 399, Priority: 30, QuotaLimit: 50, Savings: "比月卡省189元"},
+			},
+		},
+		{
+			Name:        "高级专业",
+			Description: "适合重度用户，包含永久套餐",
+			Plans: []PlanSchemeConfig{
+				{Name: "免费套餐", Days: 0, Price: 0, Priority: 0, IsFreeTier: true, QuotaLimit: 5, Savings: ""},
+				{Name: "月卡套餐", Days: 30, Price: 99, Priority: 10, QuotaLimit: 100, Savings: ""},
+				{Name: "季卡套餐", Days: 90, Price: 249, Priority: 20, QuotaLimit: 100, Savings: "比月卡省48元"},
+				{Name: "年卡套餐", Days: 365, Price: 699, Priority: 30, QuotaLimit: 100, Savings: "比月卡省489元"},
+				{Name: "永久套餐", Days: 0, Price: 1999, Priority: 40, QuotaLimit: 100, Savings: "相当于3年年卡"},
+			},
+		},
+	}
+}
+
 type Project struct {
-	ID         int       `orm:"column(id)" json:"id"`
-	ManagerId  int       `orm:"index;default(0)" json:"manager_id"`
-	Name       string    `orm:"size(40)" json:"name" valid:"MaxSize(40)"`
-	AppKey     string    `orm:"index;size(32)" json:"app_key" valid:"MaxSize(32)"`
-	SecretKey  string    `orm:"size(32)" json:"secret_key" valid:"MaxSize(32)"`
-	Type       int       `orm:"default(0);description(0单码,1账号)" json:"type" valid:"Max(1);MaxSize(1)"`
-	StatusType int       `orm:"default(0);description(0收费,1停止,2免费)" json:"status_type"`
-	PublicKey  string    `orm:"type(text);size(4000);description(RSA公钥);null" json:"public_key" valid:"MaxSize(4000)"`
-	PrivateKey string    `orm:"type(text);size(4000);description(RSA私钥);null" json:"private_key" valid:"MaxSize(4000)"`
-	KeyA       string    `orm:"size(16);description(AES加密密匙A);null" json:"key_a" valid:"MaxSize(16)"`
-	KeyB       string    `orm:"size(16);description(AES加密密匙B);null" json:"key_b" valid:"MaxSize(16)"`
-	Sign       int       `orm:"default(0);description(0 MD5 1 SHA1 2 SHA224 3 SHA256 4 SHA384 5 SHA512)" json:"sign" valid:"MaxSize(1)"`
-	Encrypt    int       `orm:"default(0);description(0开放签名API,1AES)" json:"encrypt" valid:"MaxSize(1)"`
-	LoginType  int       `orm:"default(0)" json:"login_type" valid:"MaxSize(1)"`
-	GiftType   int       `orm:"default(0)" json:"gift_type" valid:"MaxSize(1)"`
-	Notice     string    `orm:"type(text);description(公告);size(9000);null" json:"notice" valid:"MaxSize(9000)"`
-	Api        string    `orm:"type(text);description(公告);size(5000);null" json:"api" valid:"MaxSize(5000)"`
-	CreateTime time.Time `orm:"auto_now_add;type(datetime);index" json:"create_time"`
+	ID          int       `orm:"column(id)" json:"id"`
+	ManagerId   int       `orm:"index;default(0)" json:"manager_id"`
+	Name        string    `orm:"size(40)" json:"name" valid:"MaxSize(40)"`
+	AppKey      string    `orm:"index;size(32)" json:"app_key" valid:"MaxSize(32)"`
+	SecretKey   string    `orm:"size(32)" json:"secret_key" valid:"MaxSize(32)"`
+	Type        int       `orm:"default(0);description(0单码,1账号)" json:"type" valid:"Max(1);MaxSize(1)"`
+	StatusType  int       `orm:"default(0);description(0收费,1停止,2免费)" json:"status_type"`
+	PublicKey   string    `orm:"type(text);size(4000);description(RSA公钥);null" json:"public_key" valid:"MaxSize(4000)"`
+	PrivateKey  string    `orm:"type(text);size(4000);description(RSA私钥);null" json:"private_key" valid:"MaxSize(4000)"`
+	KeyA        string    `orm:"size(16);description(AES加密密匙A);null" json:"key_a" valid:"MaxSize(16)"`
+	KeyB        string    `orm:"size(16);description(AES加密密匙B);null" json:"key_b" valid:"MaxSize(16)"`
+	Sign        int       `orm:"default(0);description(0 MD5 1 SHA1 2 SHA224 3 SHA256 4 SHA384 5 SHA512)" json:"sign" valid:"MaxSize(1)"`
+	Encrypt     int       `orm:"default(0);description(0开放签名API,1AES)" json:"encrypt" valid:"MaxSize(1)"`
+	LoginType   int       `orm:"default(0)" json:"login_type" valid:"MaxSize(1)"`
+	GiftType    int       `orm:"default(0)" json:"gift_type" valid:"MaxSize(1)"`
+	Notice      string    `orm:"type(text);description(公告);size(9000);null" json:"notice" valid:"MaxSize(9000)"`
+	Api         string    `orm:"type(text);description(公告);size(5000);null" json:"api" valid:"MaxSize(5000)"`
+	PlanPresets string    `orm:"type(text);null;description(预设套餐方案JSON)" json:"plan_presets"`
+	CreateTime  time.Time `orm:"auto_now_add;type(datetime);index" json:"create_time"`
 }
 
 func (p *Project) GetProjectList(pageSize int64, page int64) (status bool, pager Pager) {
@@ -81,11 +136,13 @@ func (p *Project) GetAgentProjectList(list []int) (status bool, pager Pager) {
 	}
 }
 
-func (c *Project) Add(name string, projectType int, statusType int, encrypt int, notice string, api string, managerId int, sign int) (projectId int64) {
+func (c *Project) Add(name string, projectType int, statusType int, encrypt int, notice string, api string, managerId int, sign int, schemeName string) (projectId int64) {
 	status, publicKey, privateKey := GetRsaKey()
 	if status == false {
 		return 0
 	}
+	// 强制使用用户登录模式（禁用单码模式）
+	projectType = 1
 	p := Project{
 		ManagerId:  managerId,
 		Name:       name,
@@ -109,11 +166,71 @@ func (c *Project) Add(name string, projectType int, statusType int, encrypt int,
 	if err != nil {
 		return 0
 	}
+
+	// 根据选择的方案创建套餐
+	c.createPlansFromScheme(int(id), managerId, schemeName)
+
 	_, ac := common.GetCacheAC()
 	data, err := json.Marshal(&p)
 	_ = ac.Put(common.GetStringMd5(p.AppKey), string(data), 365*24*60*60*time.Second)
 	_ = ac.Put(p.AppKey, string(data), 365*24*60*60*time.Second)
 	return id
+}
+
+// createPlansFromScheme 根据预设方案创建套餐
+func (c *Project) createPlansFromScheme(projectId int, managerId int, schemeName string) {
+	schemes := GetDefaultPlanSchemes()
+
+	// 查找选择的方案，默认使用"标准推荐"
+	var selectedScheme *PlanScheme
+	for i := range schemes {
+		if schemes[i].Name == schemeName {
+			selectedScheme = &schemes[i]
+			break
+		}
+	}
+	if selectedScheme == nil {
+		// 默认使用标准推荐
+		for i := range schemes {
+			if schemes[i].Name == "标准推荐" {
+				selectedScheme = &schemes[i]
+				break
+			}
+		}
+	}
+	if selectedScheme == nil {
+		selectedScheme = &schemes[0]
+	}
+
+	o := orm.NewOrm()
+	for _, plan := range selectedScheme.Plans {
+		isFreeTier := 0
+		if plan.IsFreeTier {
+			isFreeTier = 1
+		}
+
+		// 生成配额规则 JSON
+		quotaRules := fmt.Sprintf(`{"quotas":[{"key":"download","name":"下载次数","limit":%d,"period":"daily","unit":"count"}]}`, plan.QuotaLimit)
+
+		card := &Cards{
+			ProjectId:  projectId,
+			Title:      plan.Name,
+			Price:      plan.Price,
+			Days:       float64(plan.Days),
+			Points:     0,
+			Tag:        plan.Name + "用户",
+			IsFreeTier: isFreeTier,
+			Priority:   plan.Priority,
+			QuotaRules: quotaRules,
+			ManagerId:  managerId,
+		}
+		_, err := o.Insert(card)
+		if err != nil {
+			logs.Error("创建套餐失败:", err, "plan:", plan.Name)
+		}
+	}
+
+	logs.Info("项目 %d 根据方案 %s 创建套餐成功", projectId, selectedScheme.Name)
 }
 
 func (c *Project) Update(id int, name string, projectType int, statusType int, encrypt int, notice string, api string, updateRsa int, updateKey int, updateAppKey int, updateSecretKey int, sign int) bool {

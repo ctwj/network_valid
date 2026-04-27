@@ -8,6 +8,7 @@ import (
 	"verification/controllers/common"
 	"verification/models"
 	"verification/validation/api"
+	"verification/services"
 
 	"github.com/astaxie/beego/validation"
 	"github.com/beego/beego/v2/core/logs"
@@ -98,7 +99,7 @@ func (p *IndexController) Register() {
 		}
 	}
 
-	if p.Project.Type == 1 {
+	if p.Project.StatusType == 1 {
 		p.CallErrorJson("已停止运营", nil)
 	}
 	member := models.Member{
@@ -153,6 +154,12 @@ func (p *IndexController) Register() {
 	}
 	status, msg := member.Register(k)
 	if status == true {
+		// 注册成功后发放免费套餐
+		planService := &services.PlanService{}
+		err := planService.GrantFreeTier(member.ID, p.Project.ID)
+		if err != nil {
+			logs.Error("发放免费套餐失败:", err)
+		}
 		p.CallJson(msg, status)
 	}
 	p.CallErrorJson(msg, status)
@@ -553,6 +560,22 @@ func (p *IndexController) Recharge() {
 	if status == false {
 		p.CallErrorJson(msg, nil)
 	}
+
+	// 充值成功后处理套餐兑换
+	if status && k.CardsId > 0 {
+		// 获取用户信息
+		u := models.Member{}
+		u.Name = param.User
+		u.CheckMember()
+
+		// 调用套餐服务处理兑换
+		planService := &services.PlanService{}
+		err := planService.RedeemPlan(u.ID, k.CardsId)
+		if err != nil {
+			logs.Error("套餐兑换失败:", err)
+		}
+	}
+
 	_ = p.Ac.Delete("member-key-" + strconv.Itoa(p.Project.ID) + "-" + param.User)
 	p.CallJson(msg, rechargeResult)
 }

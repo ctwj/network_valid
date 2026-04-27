@@ -12,8 +12,8 @@
           <n-select label-field="name" value-field="id" v-model:value="formData.project_id"
                     :options="projectList" placeholder="请选择归属项目"/>
         </n-form-item>
-        <n-form-item label="激活码类型" path="title">
-          <n-input :maxlength="28" v-model:value="formData.title" placeholder="输入激活码类型名称"/>
+        <n-form-item label="套餐类型" path="title">
+          <n-input :maxlength="28" v-model:value="formData.title" placeholder="输入套餐类型名称"/>
         </n-form-item>
         <n-form-item label="启用状态" path="is_lock">
           <n-radio-group v-model:value="formData.is_lock" name="is_lock">
@@ -39,11 +39,11 @@
                           :step="1" clearable/>
         </n-form-item>
         <n-form-item label="标签" path="tag">
-          <n-input :maxlength="200" v-model:value="formData.tag" placeholder="输入激活码绑定标签"/>
+          <n-input :maxlength="200" v-model:value="formData.tag" placeholder="输入兑换码绑定标签"/>
         </n-form-item>
         <n-form-item label="附加属性" path="key_ext_attr">
           <n-input :maxlength="200" v-model:value="formData.key_ext_attr"
-                   placeholder="输入激活码绑定附加属性"/>
+                   placeholder="输入兑换码绑定附加属性"/>
         </n-form-item>
       </div>
       <n-form-item>
@@ -132,7 +132,7 @@ export default defineComponent({
       if (formData.value.id > 0) {
         dialog.warning({
           title: '温馨提示',
-          content: '修改已经创建的激活码类型，将会导致已经创建且未使用的激活码属性跟随变换，如非必要请勿修改天数点数属性',
+          content: '修改已经创建的套餐类型，将会导致已经创建且未使用的兑换码属性跟随变换，如非必要请勿修改天数点数属性',
           positiveText: '确定',
           negativeText: '取消',
           onPositiveClick: async() => {

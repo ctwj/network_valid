@@ -68,13 +68,21 @@ func (p *ProjectController) CreateProject() {
 	notice := p.GetString("notice", "")
 	api := p.GetString("api", "")
 	sign, _ := p.GetInt("sign", 0)
+	scheme := p.GetString("scheme", "标准推荐") // 预设方案名称，默认标准推荐
 	managerId := p.ManagerId
 	var project *models.Project
-	id := project.Add(name, projectType, statusType, encrypt, notice, api, managerId, sign)
+	id := project.Add(name, projectType, statusType, encrypt, notice, api, managerId, sign, scheme)
 	if id == 0 {
 		p.Error(400, "创建失败")
 	}
 	p.Success(0, id, "创建成功")
+}
+
+// GetPlanSchemes @Title 获取预设方案列表
+// @router /getPlanSchemes [post]
+func (p *ProjectController) GetPlanSchemes() {
+	schemes := models.GetDefaultPlanSchemes()
+	p.Success(0, schemes, "获取成功")
 }
 
 // UpdateProject @Title 创建新项目

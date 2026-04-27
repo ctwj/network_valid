@@ -261,6 +261,15 @@ func init() {
 
     beego.GlobalControllerRouter["verification/controllers/admin:ProjectController"] = append(beego.GlobalControllerRouter["verification/controllers/admin:ProjectController"],
         beego.ControllerComments{
+            Method: "GetPlanSchemes",
+            Router: `/getPlanSchemes`,
+            AllowHTTPMethods: []string{"post"},
+            MethodParams: param.Make(),
+            Filters: nil,
+            Params: nil})
+
+    beego.GlobalControllerRouter["verification/controllers/admin:ProjectController"] = append(beego.GlobalControllerRouter["verification/controllers/admin:ProjectController"],
+        beego.ControllerComments{
             Method: "GetProjectList",
             Router: `/getProjectList`,
             AllowHTTPMethods: []string{"post"},
@@ -559,6 +568,60 @@ func init() {
     beego.GlobalControllerRouter["verification/controllers/api:IndexController"] = append(beego.GlobalControllerRouter["verification/controllers/api:IndexController"],
         beego.ControllerComments{
             Method: "Index",
+            Router: `/`,
+            AllowHTTPMethods: []string{"post","get"},
+            MethodParams: param.Make(),
+            Filters: nil,
+            Params: nil})
+
+    beego.GlobalControllerRouter["verification/controllers/api:PlanController"] = append(beego.GlobalControllerRouter["verification/controllers/api:PlanController"],
+        beego.ControllerComments{
+            Method: "List",
+            Router: `/`,
+            AllowHTTPMethods: []string{"post","get"},
+            MethodParams: param.Make(),
+            Filters: nil,
+            Params: nil})
+
+    beego.GlobalControllerRouter["verification/controllers/api:PlanController"] = append(beego.GlobalControllerRouter["verification/controllers/api:PlanController"],
+        beego.ControllerComments{
+            Method: "Current",
+            Router: `/`,
+            AllowHTTPMethods: []string{"post","get"},
+            MethodParams: param.Make(),
+            Filters: nil,
+            Params: nil})
+
+    beego.GlobalControllerRouter["verification/controllers/api:PlanController"] = append(beego.GlobalControllerRouter["verification/controllers/api:PlanController"],
+        beego.ControllerComments{
+            Method: "Queued",
+            Router: `/`,
+            AllowHTTPMethods: []string{"post","get"},
+            MethodParams: param.Make(),
+            Filters: nil,
+            Params: nil})
+
+    beego.GlobalControllerRouter["verification/controllers/api:QuotaController"] = append(beego.GlobalControllerRouter["verification/controllers/api:QuotaController"],
+        beego.ControllerComments{
+            Method: "Check",
+            Router: `/`,
+            AllowHTTPMethods: []string{"post","get"},
+            MethodParams: param.Make(),
+            Filters: nil,
+            Params: nil})
+
+    beego.GlobalControllerRouter["verification/controllers/api:QuotaController"] = append(beego.GlobalControllerRouter["verification/controllers/api:QuotaController"],
+        beego.ControllerComments{
+            Method: "Deduct",
+            Router: `/`,
+            AllowHTTPMethods: []string{"post","get"},
+            MethodParams: param.Make(),
+            Filters: nil,
+            Params: nil})
+
+    beego.GlobalControllerRouter["verification/controllers/api:QuotaController"] = append(beego.GlobalControllerRouter["verification/controllers/api:QuotaController"],
+        beego.ControllerComments{
+            Method: "DeductBatch",
             Router: `/`,
             AllowHTTPMethods: []string{"post","get"},
             MethodParams: param.Make(),

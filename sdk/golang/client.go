@@ -21,6 +21,7 @@ type Client struct {
 	version     string
 	machineCode string
 	httpClient  *http.Client
+	clientToken string // 登录后保存的 client token，用于心跳
 }
 
 // NewClient 创建 SDK 客户端
@@ -61,6 +62,11 @@ func NewClient(cfg Config) (*Client, error) {
 		machineCode: machineCode,
 		httpClient:  httpClient,
 	}, nil
+}
+
+// MachineCode 返回当前客户端的机器码
+func (c *Client) MachineCode() string {
+	return c.machineCode
 }
 
 // buildCommonParams 构建公共参数

@@ -94,13 +94,25 @@ func ExampleClient_Heartbeat() {
 		Version:   "1.0.0",
 	})
 
+	// 先登录获取 client token
+	_, err := client.Login(sdk.LoginRequest{
+		Username: "user@example.com",
+		Password: "password123",
+	})
+	if err != nil {
+		fmt.Printf("登录失败: %v\n", err)
+		return
+	}
+
 	// 定期发送心跳（建议每 30 秒）
 	ticker := time.NewTicker(30 * time.Second)
 	defer ticker.Stop()
 
 	for range ticker.C {
-		if err := client.Heartbeat("user@example.com"); err != nil {
+		if err := client.Heartbeat(); err != nil {
 			fmt.Printf("心跳失败: %v\n", err)
+			// 心跳失败可能需要重新登录
+			break
 		}
 	}
 }

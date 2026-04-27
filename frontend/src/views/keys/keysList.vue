@@ -26,15 +26,15 @@
               </n-form-item>
             </n-grid-item>
             <n-grid-item>
-              <n-form-item label="激活码类型" path="title">
+              <n-form-item label="套餐类型" path="title">
                 <n-select label-field="title" value-field="id" v-model:value="formParams.cards_id"
-                          :options="cardList" placeholder="请选择归属激活码类型"/>
+                          :options="cardList" placeholder="请选择归属套餐类型"/>
               </n-form-item>
             </n-grid-item>
             <n-grid-item>
-              <n-form-item label="激活码" path="long_keys">
+              <n-form-item label="兑换码" path="long_keys">
                 <n-input :maxlength="32" v-model:value="formParams.long_keys"
-                         placeholder="请输入需查询的激活码" clearable/>
+                         placeholder="请输入需查询的兑换码" clearable/>
               </n-form-item>
             </n-grid-item>
             <n-grid-item>
@@ -60,7 +60,7 @@
             <n-grid-item>
               <n-form-item label="订单号" path="order_id">
                 <n-input-number v-model:value="formParams.order_id" :min="1" :max="999999999"
-                                :step="1" clearable placeholder="请输入激活码订单号"/>
+                                :step="1" clearable placeholder="请输入兑换码订单号"/>
               </n-form-item>
             </n-grid-item>
             <n-grid-item>
@@ -167,7 +167,7 @@ const params = ref({
 function handleEdit(record: Recordable) {
   show.value = true;
   row.value = record
-  title.value = "修改激活码类型"
+  title.value = "修改套餐类型"
   // router.push({ name: 'basic-info', params: { id: record.id } });
 }
 
@@ -196,7 +196,7 @@ const loadDataTable = async (res) => {
 function addTable() {
   show.value = true;
   row.value = null;
-  title.value = "创建新激活码类型"
+  title.value = "创建新套餐类型"
 }
 
 function handleCheck(rowKeys: DataTableRowKey[]) {
