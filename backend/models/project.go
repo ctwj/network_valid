@@ -3,10 +3,12 @@ package models
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/beego/beego/v2/client/orm"
-	"github.com/beego/beego/v2/core/logs"
+	"math"
 	"time"
 	"verification/controllers/common"
+
+	"github.com/beego/beego/v2/client/orm"
+	"github.com/beego/beego/v2/core/logs"
 )
 
 // PlanSchemeConfig 预设方案套餐配置
@@ -136,7 +138,7 @@ func (p *Project) GetAgentProjectList(list []int) (status bool, pager Pager) {
 	}
 }
 
-func (c *Project) Add(name string, projectType int, statusType int, encrypt int, notice string, api string, managerId int, sign int, schemeName string) (projectId int64) {
+func (c *Project) Add(name string, projectType int, statusType int, encrypt int, notice string, api string, managerId int, sign int, schemeName string, monthlyPrice float64) (projectId int64) {
 	status, publicKey, privateKey := GetRsaKey()
 	if status == false {
 		return 0
@@ -166,9 +168,43 @@ func (c *Project) Add(name string, projectType int, statusType int, encrypt int,
 	if err != nil {
 		return 0
 	}
+	projectId = id
+
+	// 创建默认登录规则
+	loginRule := &ProjectLogin{
+		ManagerId:    managerId,
+		Title:        "默认规则",
+		Mode:         1, // 普通登录
+		RegMode:      1, // 普通注册
+		UnbindMode:   3, // 任意解绑
+		UnbindTimes:  3,
+		UnbindDate:   1,
+		NumberMore:   10,
+		NumberWeaken: 1,
+	}
+	loginId, err := o.Insert(loginRule)
+	if err == nil && loginId > 0 {
+		// 绑定登录规则到项目
+		p.ID = int(id)
+		p.LoginType = int(loginId)
+		o.Update(&p, "LoginType")
+	}
+
+	// 创建默认版本号
+	version := &ProjectVersion{
+		ManagerId:    managerId,
+		ProjectId:    int(id),
+		Version:      1.00,
+		IsMustUpdate: 0,
+		IsActive:     0,
+	}
+	_, err = o.Insert(version)
+	if err != nil {
+		logs.Error("创建默认版本号失败:", err)
+	}
 
 	// 根据选择的方案创建套餐
-	c.createPlansFromScheme(int(id), managerId, schemeName)
+	c.createPlansFromScheme(int(id), managerId, schemeName, monthlyPrice)
 
 	_, ac := common.GetCacheAC()
 	data, err := json.Marshal(&p)
@@ -178,7 +214,7 @@ func (c *Project) Add(name string, projectType int, statusType int, encrypt int,
 }
 
 // createPlansFromScheme 根据预设方案创建套餐
-func (c *Project) createPlansFromScheme(projectId int, managerId int, schemeName string) {
+func (c *Project) createPlansFromScheme(projectId int, managerId int, schemeName string, monthlyPrice float64) {
 	schemes := GetDefaultPlanSchemes()
 
 	// 查找选择的方案，默认使用"标准推荐"
@@ -202,6 +238,11 @@ func (c *Project) createPlansFromScheme(projectId int, managerId int, schemeName
 		selectedScheme = &schemes[0]
 	}
 
+	// 如果没有指定月费，使用默认值 30
+	if monthlyPrice <= 0 {
+		monthlyPrice = 30
+	}
+
 	o := orm.NewOrm()
 	for _, plan := range selectedScheme.Plans {
 		isFreeTier := 0
@@ -209,13 +250,16 @@ func (c *Project) createPlansFromScheme(projectId int, managerId int, schemeName
 			isFreeTier = 1
 		}
 
+		// 基于月费动态计算价格
+		price := calculatePlanPrice(plan, monthlyPrice, selectedScheme.Name)
+
 		// 生成配额规则 JSON
 		quotaRules := fmt.Sprintf(`{"quotas":[{"key":"download","name":"下载次数","limit":%d,"period":"daily","unit":"count"}]}`, plan.QuotaLimit)
 
 		card := &Cards{
 			ProjectId:  projectId,
 			Title:      plan.Name,
-			Price:      plan.Price,
+			Price:      price,
 			Days:       float64(plan.Days),
 			Points:     0,
 			Tag:        plan.Name + "用户",
@@ -230,7 +274,61 @@ func (c *Project) createPlansFromScheme(projectId int, managerId int, schemeName
 		}
 	}
 
-	logs.Info("项目 %d 根据方案 %s 创建套餐成功", projectId, selectedScheme.Name)
+	logs.Info("项目 %d 根据方案 %s 创建套餐成功，月费基准: %.2f", projectId, selectedScheme.Name, monthlyPrice)
+}
+
+// calculatePlanPrice 根据月费基准计算套餐价格
+func calculatePlanPrice(plan PlanSchemeConfig, monthlyPrice float64, schemeName string) float64 {
+	// 免费套餐
+	if plan.IsFreeTier {
+		return 0
+	}
+
+	// 永久套餐（天数=0 且非免费）
+	if plan.Days == 0 {
+		switch schemeName {
+		case "高级专业":
+			return roundPrice(monthlyPrice * 66.6) // 约 3 年年卡
+		}
+		return roundPrice(monthlyPrice * 66.6)
+	}
+
+	// 根据天数和方案类型计算价格
+	switch schemeName {
+	case "入门引导":
+		switch plan.Days {
+		case 30:
+			return roundPrice(monthlyPrice)
+		case 90:
+			return roundPrice(monthlyPrice * 2.67) // 约省 10%
+		}
+	case "标准推荐":
+		switch plan.Days {
+		case 30:
+			return roundPrice(monthlyPrice)
+		case 90:
+			return roundPrice(monthlyPrice * 2.63) // 约省 12%
+		case 365:
+			return roundPrice(monthlyPrice * 8.14) // 约省 32%
+		}
+	case "高级专业":
+		switch plan.Days {
+		case 30:
+			return roundPrice(monthlyPrice * 3.3)
+		case 90:
+			return roundPrice(monthlyPrice * 8.3)
+		case 365:
+			return roundPrice(monthlyPrice * 23.3)
+		}
+	}
+
+	// 默认：按天数比例计算
+	return roundPrice(monthlyPrice * float64(plan.Days) / 30)
+}
+
+// roundPrice 价格保留两位小数
+func roundPrice(price float64) float64 {
+	return math.Round(price*100) / 100
 }
 
 func (c *Project) Update(id int, name string, projectType int, statusType int, encrypt int, notice string, api string, updateRsa int, updateKey int, updateAppKey int, updateSecretKey int, sign int) bool {

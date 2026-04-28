@@ -86,9 +86,31 @@
             <n-alert type="info" style="margin-bottom: 12px">
               选择套餐方案后，系统将自动创建对应的套餐类型。您可以在创建后根据需要调整价格和配额。
             </n-alert>
+
+            <n-card size="small" :bordered="false" style="background: var(--n-color-modal); margin-bottom: 12px">
+              <template #header>
+                <n-text strong>定价基准</n-text>
+              </template>
+              <n-form-item label="单月费用" path="monthly_price">
+                <n-input-number
+                  v-model:value="formData.monthly_price"
+                  :min="1"
+                  :precision="2"
+                  :step="5"
+                  placeholder="输入单月费用"
+                  style="width: 200px"
+                >
+                  <template #prefix>¥</template>
+                </n-input-number>
+                <n-text depth="3" style="margin-left: 12px; font-size: 13px">
+                  套餐价格将基于此费用自动计算
+                </n-text>
+              </n-form-item>
+            </n-card>
+
             <n-radio-group v-model:value="formData.scheme" name="scheme" style="width: 100%">
               <n-grid :cols="1" :x-gap="12" :y-gap="12">
-                <n-gi v-for="scheme in planSchemes" :key="scheme.name">
+                <n-gi v-for="scheme in computedPlanSchemes" :key="scheme.name">
                   <n-card
                     size="small"
                     :style="{
@@ -125,8 +147,8 @@
                         <n-space :size="4" align="center">
                           <n-text strong>{{ plan.name }}</n-text>
                           <n-text depth="3">|</n-text>
-                          <template v-if="plan.price > 0">
-                            <n-text type="error" strong>¥{{ plan.price }}</n-text>
+                          <template v-if="plan.computedPrice > 0">
+                            <n-text type="error" strong>¥{{ plan.computedPrice.toFixed(2) }}</n-text>
                             <n-text v-if="plan.savings" depth="3" style="font-size: 12px">
                               ({{ plan.savings }})
                             </n-text>
@@ -200,7 +222,7 @@
 </template>
 
 <script lang="ts">
-import {defineComponent, reactive, ref, onMounted, Ref, watch} from 'vue';
+import {defineComponent, reactive, ref, onMounted, Ref, watch, computed} from 'vue';
 import {useAppStore} from "@/store/modules/app";
 import {createProject, updateProject, getPlanSchemes} from "@/api";
 import {useMessage, MessageReactive} from 'naive-ui'
@@ -210,25 +232,25 @@ const {project} = setting
 
 // 运营模式配置说明
 const statusConfig = [
-  { type: 'success', desc: '收费运营：用户需要购买套餐才能使用，适合商业化运营场景。系统将启用完整的付费流程和订单管理功能。' },
-  { type: 'warning', desc: '停止运营：项目暂停服务，所有用户无法登录使用。适合维护期间或暂停业务时使用。' },
-  { type: 'info', desc: '免费运营：用户无需付费即可使用，适合内部测试、演示或公益项目。不产生订单和支付记录。' }
+  { type: 'success', desc: '收费运营：用户需要购买套餐才能使用，适合商业化运营场景。系统将启用完整的付费流程和订单管理功能。SDK 调用需验证用户会员状态，未付费用户将返回错误码。' },
+  { type: 'warning', desc: '停止运营：项目暂停服务，所有用户无法登录使用。适合维护期间或暂停业务时使用。SDK 所有接口将返回维护中提示。' },
+  { type: 'info', desc: '免费运营：用户无需付费即可使用，适合内部测试、演示或公益项目。SDK 调用无需验证会员状态，新注册用户自动获得免费标签。' }
 ]
 
 // 加密模式配置说明
 const encryptConfig = [
-  { type: 'warning', desc: '开放API：不进行数据加密，请求参数明文传输。适合内部系统或已通过HTTPS保护的环境，性能最优但安全性较低。' },
-  { type: 'success', desc: 'AES加密：使用AES对称加密算法保护数据传输安全。客户端需要使用对应的AES密钥进行加解密，安全性更高。' }
+  { type: 'warning', desc: '开放API：不进行数据加密，请求参数明文传输。适合内部系统或已通过 HTTPS 保护的环境，性能最优但安全性较低。SDK 无需额外配置加密参数。' },
+  { type: 'success', desc: 'AES加密：使用 AES 对称加密算法保护数据传输安全。SDK 需配置 KeyA 和 KeyB 进行加解密，安全性更高，推荐用于生产环境。' }
 ]
 
 // 签名算法配置说明
 const signConfig = [
-  { type: 'warning', desc: 'MD5：生成128位哈希值，速度快但安全性较低。适合对安全性要求不高的场景，不推荐用于敏感数据。' },
-  { type: 'info', desc: 'SHA1：生成160位哈希值，比MD5更安全，但已发现碰撞漏洞。建议升级到SHA256或更高版本。' },
-  { type: 'info', desc: 'SHA224：生成224位哈希值，安全性较好，适合一般应用场景。' },
-  { type: 'success', desc: 'SHA256：生成256位哈希值，安全性高，推荐使用。适合大多数安全敏感场景，是目前最常用的签名算法。' },
-  { type: 'success', desc: 'SHA384：生成384位哈希值，安全性更高。适合对安全性要求极高的场景，计算开销略大。' },
-  { type: 'success', desc: 'SHA512：生成512位哈希值，安全性最高。适合金融、安全认证等高安全需求场景，计算开销最大。' }
+  { type: 'warning', desc: 'MD5：生成 128 位哈希值，速度快但安全性较低。SDK 使用 GenerateSign() 函数，参数拼接顺序：appkey + secretkey + version + timestamp + mac。' },
+  { type: 'info', desc: 'SHA1：生成 160 位哈希值，比 MD5 更安全，但已发现碰撞漏洞。SDK 需使用对应 SHA1 签名函数。' },
+  { type: 'info', desc: 'SHA224：生成 224 位哈希值，安全性较好，适合一般应用场景。SDK 需使用对应 SHA224 签名函数。' },
+  { type: 'success', desc: 'SHA256：生成 256 位哈希值，安全性高，推荐使用。适合大多数安全敏感场景，是目前最常用的签名算法。SDK 需使用对应 SHA256 签名函数。' },
+  { type: 'success', desc: 'SHA384：生成 384 位哈希值，安全性更高。适合对安全性要求极高的场景，计算开销略大。SDK 需使用对应 SHA384 签名函数。' },
+  { type: 'success', desc: 'SHA512：生成 512 位哈希值，安全性最高。适合金融、安全认证等高安全需求场景，计算开销最大。SDK 需使用对应 SHA512 签名函数。' }
 ]
 
 const formVal = {
@@ -241,6 +263,7 @@ const formVal = {
   api: '',
   sign: 0,
   scheme: '标准推荐',  // 默认标准推荐方案
+  monthly_price: 30,  // 默认单月费用
   update_rsa: 0,
   update_key: 0,
   update_app_key: 0,
@@ -285,10 +308,50 @@ export default defineComponent({
       api: '',
       sign: 0,
       scheme: '标准推荐',
+      monthly_price: 30,
       update_rsa: 0,
       update_key: 0,
       update_app_key: 0,
       update_secret_key: 0
+    })
+
+    // 计算套餐价格
+    const calculatePlanPrice = (plan: any, monthlyPrice: number, schemeName: string): number => {
+      if (plan.is_free_tier) return 0
+      if (plan.days === 0) {
+        // 永久套餐
+        if (schemeName === '高级专业') return Math.round(monthlyPrice * 66.6 * 100) / 100
+        return Math.round(monthlyPrice * 66.6 * 100) / 100
+      }
+      switch (schemeName) {
+        case '入门引导':
+          if (plan.days === 30) return Math.round(monthlyPrice * 100) / 100
+          if (plan.days === 90) return Math.round(monthlyPrice * 2.67 * 100) / 100
+          break
+        case '标准推荐':
+          if (plan.days === 30) return Math.round(monthlyPrice * 100) / 100
+          if (plan.days === 90) return Math.round(monthlyPrice * 2.63 * 100) / 100
+          if (plan.days === 365) return Math.round(monthlyPrice * 8.14 * 100) / 100
+          break
+        case '高级专业':
+          if (plan.days === 30) return Math.round(monthlyPrice * 3.3 * 100) / 100
+          if (plan.days === 90) return Math.round(monthlyPrice * 8.3 * 100) / 100
+          if (plan.days === 365) return Math.round(monthlyPrice * 23.3 * 100) / 100
+          break
+      }
+      return Math.round(monthlyPrice * plan.days / 30 * 100) / 100
+    }
+
+    // 计算后的套餐方案
+    const computedPlanSchemes = computed(() => {
+      const monthlyPrice = (formData.value as any).monthly_price || 30
+      return planSchemes.value.map(scheme => ({
+        ...scheme,
+        plans: scheme.plans.map((plan: any) => ({
+          ...plan,
+          computedPrice: calculatePlanPrice(plan, monthlyPrice, scheme.name)
+        }))
+      }))
     })
 
     // 获取预设方案
@@ -366,6 +429,7 @@ export default defineComponent({
       change,
       hash,
       planSchemes,
+      computedPlanSchemes,
       handleOk,
       statusConfig,
       encryptConfig,

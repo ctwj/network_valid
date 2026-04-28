@@ -69,9 +69,10 @@ func (p *ProjectController) CreateProject() {
 	api := p.GetString("api", "")
 	sign, _ := p.GetInt("sign", 0)
 	scheme := p.GetString("scheme", "标准推荐") // 预设方案名称，默认标准推荐
+	monthlyPrice, _ := p.GetFloat("monthly_price", 30) // 单月费用，默认 30 元
 	managerId := p.ManagerId
 	var project *models.Project
-	id := project.Add(name, projectType, statusType, encrypt, notice, api, managerId, sign, scheme)
+	id := project.Add(name, projectType, statusType, encrypt, notice, api, managerId, sign, scheme, monthlyPrice)
 	if id == 0 {
 		p.Error(400, "创建失败")
 	}
